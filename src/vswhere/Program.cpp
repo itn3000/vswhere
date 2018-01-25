@@ -43,6 +43,7 @@ int wmain(_In_ int argc, _In_ LPCWSTR argv[])
 
             return ERROR_SUCCESS;
         }
+		console.Initialize();
 
         // Attempt to get the ISetupHelper.
         ISetupHelperPtr helper;

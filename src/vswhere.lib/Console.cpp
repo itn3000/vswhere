@@ -7,11 +7,36 @@
 
 using namespace std;
 
+namespace
+{
+	std::string WcsToMbsString(const std::wstring &wstr, int cp)
+	{
+		auto len = WideCharToMultiByte(cp, 0, wstr.c_str(), wstr.length(), NULL, 0, NULL, NULL);
+		std::vector<char> mbuf(len, 0);
+		WideCharToMultiByte(cp, 0, wstr.c_str(), wstr.length(), mbuf.data(), len, NULL, NULL);
+		return std::string(mbuf.begin(), mbuf.end());
+	}
+	std::string WcsToMbsString(const wchar_t *wstr, int wlen, int cp)
+	{
+		auto len = WideCharToMultiByte(cp, 0, wstr, wlen, NULL, 0, NULL, NULL);
+		std::vector<char> mbuf(len, 0);
+		WideCharToMultiByte(cp, 0, wstr, wlen, mbuf.data(), len, NULL, NULL);
+		return std::string(mbuf.begin(), mbuf.end());
+	}
+}
+
 void Console::Initialize() noexcept
 {
     if (IsConsole(stdout))
     {
-        ::_setmode(_fileno(stdout), _O_WTEXT);
+		if (!m_args.get_IsUtf8Output())
+		{
+			::_setmode(_fileno(stdout), _O_WTEXT);
+		}
+		else
+		{
+			::_setmode(_fileno(stdout), _O_TEXT);
+		}
     }
     else
     {
@@ -57,7 +82,17 @@ void __cdecl Console::WriteLine(_In_ const std::wstring& value)
 
 void Console::Write(_In_ LPCWSTR wzFormat, va_list args)
 {
-    ::_vwprintf_p(wzFormat, args);
+	if (m_args.get_IsUtf8Output())
+	{
+		auto wlen = ::_vscwprintf_p(wzFormat, args);
+		std::vector<wchar_t> wbuf(wlen + 1, 0);
+		::_vsnwprintf_s(wbuf.data(), wlen + 1, _TRUNCATE, wzFormat, args);
+		auto mstr = WcsToMbsString(wbuf.data(), wlen, CP_UTF8);
+		printf("%s", mstr.c_str());
+	}
+	else {
+		::_vwprintf_p(wzFormat, args);
+	}
 }
 
 bool Console::IsConsole(_In_ FILE* f) const noexcept
