@@ -86,7 +86,7 @@ void Console::Write(_In_ LPCWSTR wzFormat, va_list args)
 	{
 		auto wlen = ::_vscwprintf_p(wzFormat, args);
 		std::vector<wchar_t> wbuf(wlen + 1, 0);
-		::_vsnwprintf_s(wbuf.data(), wlen + 1, _TRUNCATE, wzFormat, args);
+		::_vswprintf_p(wbuf.data(), wlen + 1, wzFormat, args);
 		auto mstr = WcsToMbsString(wbuf.data(), wlen, CP_UTF8);
 		printf("%s", mstr.c_str());
 	}
